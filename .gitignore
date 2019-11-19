@@ -1,0 +1,7 @@
+/.idea
+/__pycache__
+/cats
+*.sublime-project
+*.sublime-workspace
+*.DS_Store
+dataSets/*.npz
