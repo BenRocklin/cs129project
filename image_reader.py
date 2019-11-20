@@ -2,9 +2,10 @@ import numpy as np
 from collections import defaultdict
 import csv
 import os
-from skimage import io
+from skimage import io, feature
 from skimage.transform import resize
 from skimage.color import rgb2gray
+from scipy import ndimage as ndi
 
 
 def imageToFeatures(imageMatrix):
@@ -16,7 +17,9 @@ def imageToFeatures(imageMatrix):
     h = 0.07
     l = 0.04
 
-    grayEdges, GxGray, GyGray, smoothed, nms, strong_edges, weak_edges = canny(resizedImage, kernel_size=ks, sigma=sig, high=h, low=l)
+    #grayEdges, GxGray, GyGray, smoothed, nms, strong_edges, weak_edges = canny(resizedImage, kernel_size=ks, sigma=sig, high=h, low=l)
+    gausImage = ndi.gaussian_filter(resizedImage, 1.5)
+    grayEdges = feature.canny(gausImage, sigma=0.01)
 
     return grayEdges.flatten()
 
@@ -405,13 +408,19 @@ def getTrainableDataset():
                     x_files.append(dataPath)
 
     num_examples = 0
+    num_features = None
+    X_builder = None
+    y_builder = np.asarray(y_labs, dtype=int)
     for file in x_files:
         imageMat = io.imread(file)
         features = imageToFeatures(imageMat)
+        if num_features == None:
+            num_features = features.shape[0]
+            X_builder = np.zeros((1, num_features))
+            X_builder[0, :] = features
+        else:
+            X_builder = np.vstack((X_builder, features))
         num_examples += 1
         print("File " + str(num_examples) + ": " + file)
-        if num_examples >= 5:
-            break
-    features[0]
-    return None
+    return X_builder, y_builder
 
