@@ -1,5 +1,6 @@
 import numpy as np
 from collections import defaultdict
+import csv
 import os
 from skimage import io
 from skimage.transform import resize
@@ -375,9 +376,44 @@ def canny(img, kernel_size=5, sigma=1.4, high=20, low=15):
 
     return edge, Gx, Gy, smoothed, nms, strong_edges, weak_edges
 
-
+def isInt(str):
+    try:
+        int(str)
+        return True
+    except ValueError:
+        return False
 
 def getTrainableDataset():
+    labelsPath = "./labels"
+    imagesPath = "./cats"
+    csvFiles = []
+    examples = defaultdict(list)
+    for _, _, files in os.walk(labelsPath):
+        if files is not None:
+            for file in files:
+                csvFiles.append(labelsPath + "/" + file)
+    # for _, dirs, files in os.walk(imagesPath):
+    #     if files is not None:
+    #         for file in files:
+    #             print(file)
+    #     if dirs is not None:
+    #         for dir in dirs:
+    #             print(dir)
+    y_labs = []
+    x_files = []
+    for csvFile in csvFiles:
+        with open(csvFile) as activeCSV:
+            readCSV = csv.reader(activeCSV, delimiter=',')
+            for row in readCSV:
+                if row[1] and isInt(row[1]):
+                    y_labs.append(int(row[1]))
+                    folder = csvFile.split('/')[-1].split('.')[0]
+                    dataPath = imagesPath + "/" + folder + "/" + row[0]
+                    x_files.append(dataPath)
+    for file in x_files:
+        imageMat = io.imread(file)
+        features = imageToFeatures(imageMat)
+        print(features.shape)
     return None
 
 
