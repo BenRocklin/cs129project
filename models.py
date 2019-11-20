@@ -15,6 +15,6 @@ def trainNeuralNet(X_train, y_train, X_test, y_test):
     pass
 
 def trainModels(features, labels):
-    pass
-    # trainLogReg(X_train, y_train, X_test, y_test)
-    # trainNeuralNet(X_train, y_train, X_test, y_test)
+    X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=.2)
+    trainLogReg(X_train, y_train, X_test, y_test)
+    trainNeuralNet(X_train, y_train, X_test, y_test)

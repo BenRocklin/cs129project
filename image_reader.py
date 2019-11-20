@@ -390,18 +390,11 @@ def getTrainableDataset():
     labelsPath = "./labels"
     imagesPath = "./cats"
     csvFiles = []
-    examples = defaultdict(list)
     for _, _, files in os.walk(labelsPath):
         if files is not None:
             for file in files:
                 csvFiles.append(labelsPath + "/" + file)
-    # for _, dirs, files in os.walk(imagesPath):
-    #     if files is not None:
-    #         for file in files:
-    #             print(file)
-    #     if dirs is not None:
-    #         for dir in dirs:
-    #             print(dir)
+
     y_labs = []
     x_files = []
     for csvFile in csvFiles:
@@ -413,9 +406,21 @@ def getTrainableDataset():
                     folder = csvFile.split('/')[-1].split('.')[0]
                     dataPath = imagesPath + "/" + folder + "/" + row[0]
                     x_files.append(dataPath)
+
+    num_examples = 0
+    num_features = None
+    X_builder = None
+    y_builder = np.asarray(y_labs, dtype=int)
     for file in x_files:
         imageMat = io.imread(file)
         features = imageToFeatures(imageMat)
-        print(features.shape)
-    return None
+        if num_features == None:
+            num_features = features.shape[0]
+            X_builder = np.zeros((1, num_features))
+            X_builder[0, :] = features
+        else:
+            X_builder = np.vstack((X_builder, features))
+        num_examples += 1
+        print("File " + str(num_examples) + ": " + file)
+    return X_builder, y_builder
 
