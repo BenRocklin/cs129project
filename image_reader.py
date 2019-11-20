@@ -8,17 +8,17 @@ from skimage.color import rgb2gray
 
 
 def imageToFeatures(imageMatrix):
-	grayscale = rgb2gray(imageMatrix)
-	resizedImage = resize(grayscale, (375, 500))
+    grayscale = rgb2gray(imageMatrix)
+    resizedImage = resize(grayscale, (375, 500))
 
-	ks = 5
-	sig = 1.4
-	h = 0.07
-	l = 0.04
+    ks = 5
+    sig = 1.4
+    h = 0.07
+    l = 0.04
 
-	grayEdges, GxGray, GyGray, smoothed, nms, strong_edges, weak_edges = canny(resizedImage, kernel_size=ks, sigma=sig, high=h, low=l)
+    grayEdges, GxGray, GyGray, smoothed, nms, strong_edges, weak_edges = canny(resizedImage, kernel_size=ks, sigma=sig, high=h, low=l)
 
-	return grayEdges.flatten()
+    return grayEdges.flatten()
 
 
 def conv(image, kernel):
@@ -387,18 +387,11 @@ def getTrainableDataset():
     labelsPath = "./labels"
     imagesPath = "./cats"
     csvFiles = []
-    examples = defaultdict(list)
     for _, _, files in os.walk(labelsPath):
         if files is not None:
             for file in files:
                 csvFiles.append(labelsPath + "/" + file)
-    # for _, dirs, files in os.walk(imagesPath):
-    #     if files is not None:
-    #         for file in files:
-    #             print(file)
-    #     if dirs is not None:
-    #         for dir in dirs:
-    #             print(dir)
+
     y_labs = []
     x_files = []
     for csvFile in csvFiles:
@@ -410,9 +403,15 @@ def getTrainableDataset():
                     folder = csvFile.split('/')[-1].split('.')[0]
                     dataPath = imagesPath + "/" + folder + "/" + row[0]
                     x_files.append(dataPath)
+
+    num_examples = 0
     for file in x_files:
         imageMat = io.imread(file)
         features = imageToFeatures(imageMat)
-        print(features.shape)
+        num_examples += 1
+        print("File " + str(num_examples) + ": " + file)
+        if num_examples >= 5:
+            break
+    features[0]
     return None
 
