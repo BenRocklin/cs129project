@@ -7,7 +7,7 @@ from skimage.color import rgb2gray
 
 def imageToFeatures(imageMatrix):
 	grayscale = rgb2gray(imageMatrix)
-	resizedImage = resize(currImageArray, (375, 500))
+	resizedImage = resize(grayscale, (375, 500))
 
     ks = 5
     sig = 1.4
