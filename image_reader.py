@@ -5,18 +5,19 @@ from skimage import io
 from skimage.transform import resize
 from skimage.color import rgb2gray
 
+
 def imageToFeatures(imageMatrix):
 	grayscale = rgb2gray(imageMatrix)
 	resizedImage = resize(grayscale, (375, 500))
 
-    ks = 5
-    sig = 1.4
-    h = 0.07
-    l = 0.04
+	ks = 5
+	sig = 1.4
+	h = 0.07
+	l = 0.04
 
-    grayEdges, GxGray, GyGray, smoothed, nms, strong_edges, weak_edges = canny(resizedImage, kernel_size=ks, sigma=sig, high=h, low=l)
+	grayEdges, GxGray, GyGray, smoothed, nms, strong_edges, weak_edges = canny(resizedImage, kernel_size=ks, sigma=sig, high=h, low=l)
 
-    return grayEdges
+	return grayEdges
 
 
 def conv(image, kernel):
