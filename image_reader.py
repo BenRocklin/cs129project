@@ -18,7 +18,7 @@ def imageToFeatures(imageMatrix):
 
 	grayEdges, GxGray, GyGray, smoothed, nms, strong_edges, weak_edges = canny(resizedImage, kernel_size=ks, sigma=sig, high=h, low=l)
 
-	return grayEdges
+	return grayEdges.flatten()
 
 
 def conv(image, kernel):
@@ -415,5 +415,4 @@ def getTrainableDataset():
         features = imageToFeatures(imageMat)
         print(features.shape)
     return None
-
 
