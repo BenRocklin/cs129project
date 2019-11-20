@@ -386,7 +386,7 @@ def isInt(str):
     except ValueError:
         return False
 
-def getTrainableDataset():
+def getTrainableDataset(max_examples=-1):
     labelsPath = "./labels"
     imagesPath = "./cats"
     csvFiles = []
@@ -422,5 +422,8 @@ def getTrainableDataset():
             X_builder = np.vstack((X_builder, features))
         num_examples += 1
         print("File " + str(num_examples) + ": " + file)
+        if num_examples == max_examples:
+            y_builder = y_builder[:max_examples]
+            break
     return X_builder, y_builder
 
