@@ -2,23 +2,26 @@ import numpy as np
 from collections import defaultdict
 import csv
 import os
-from skimage import io
+from skimage import io, feature
 from skimage.transform import resize
 from skimage.color import rgb2gray
+from scipy import ndimage as ndi
 
 
 def imageToFeatures(imageMatrix):
-	grayscale = rgb2gray(imageMatrix)
-	resizedImage = resize(grayscale, (375, 500))
+    grayscale = rgb2gray(imageMatrix)
+    resizedImage = resize(grayscale, (375, 500))
 
-	ks = 5
-	sig = 1.4
-	h = 0.07
-	l = 0.04
+    ks = 5
+    sig = 1.4
+    h = 0.07
+    l = 0.04
 
-	grayEdges, GxGray, GyGray, smoothed, nms, strong_edges, weak_edges = canny(resizedImage, kernel_size=ks, sigma=sig, high=h, low=l)
+    #grayEdges, GxGray, GyGray, smoothed, nms, strong_edges, weak_edges = canny(resizedImage, kernel_size=ks, sigma=sig, high=h, low=l)
+    gausImage = ndi.gaussian_filter(resizedImage, 1.5)
+    grayEdges = feature.canny(gausImage, sigma=0.01)
 
-	return grayEdges.flatten()
+    return grayEdges.flatten()
 
 
 def conv(image, kernel):
