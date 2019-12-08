@@ -182,9 +182,9 @@ def getResizedCannyFace(newGrayEdges):
     resizedImage = resize(paddedImage, (TARGET_ROWS, TARGET_COLS), anti_aliasing=False)
 
     # Attempts to get rid of some blurring from resizing.
-    adjusted = (resizedImage > 0.4)
+    adjusted = (resizedImage > 0.1)
 
-    return adjusted
+    return resizedImage
 
 
 
