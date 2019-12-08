@@ -30,6 +30,7 @@ def trainNeuralNet(X_train, y_train):
     nn.add(Dense(120, activation='relu'))
     nn.add(Dense(1, activation='sigmoid'))
     nn.compile(optimizer='Adam', loss='binary_crossentropy', metrics=['acc'])#,f1_m,precision_m, recall_m])
+    #nn.compile(optimizer='Adam', loss='binary_crossentropy', metrics=['acc',f1_m])#,precision_m, recall_m])
     hnn = nn.fit(X_train, y_train, epochs=10)
 
     print("Neural net raining set accuracy: %f" % np.sqrt(hnn.history['acc'][-1]))
@@ -64,7 +65,8 @@ def evaluateLogReg(model, X_test, y_test, save_path):
 
 def evaluateNN(model, X_test, y_test, save_path):
     # Test set values
-    #loss, accuracy,f1_score, precision, recall = nn.evaluate(X_test, y_test, batch_size=500, verbose=0)
+    ##loss, accuracy,f1_score, precision, recall = model.evaluate(X_test, y_test, batch_size=500, verbose=0)
+    #loss, accuracy, f1_score = model.evaluate(X_test, y_test, batch_size=500, verbose=0)
     loss, accuracy  = model.evaluate(X_test, y_test, batch_size=500, verbose=0)
 
     y_pred = model.predict_classes(X_test)
