@@ -2,26 +2,191 @@ import numpy as np
 from collections import defaultdict
 import csv
 import os
+import math
 from skimage import io, feature
-from skimage.transform import resize
+from skimage.transform import resize, rotate
 from skimage.color import rgb2gray
 from scipy import ndimage as ndi
 
+LEFT_EYE = 0
+RIGHT_EYE = 1
+MOUTH = 2
+EAR_ONE = 3
+EAR_TWO = 4
+EAR_THREE = 5
+EAR_FOUR = 6
+EAR_FIVE = 7
+TARGET_ROWS = 150
+TARGET_COLS = 150
 
-def imageToFeatures(imageMatrix):
+def imageToFeatures(imageMatrix, file):
     grayscale = rgb2gray(imageMatrix)
-    resizedImage = resize(grayscale, (375, 500))
+    grayFace = getIsolatedRotatedFace(file, grayscale)
 
-    ks = 5
-    sig = 1.4
-    h = 0.07
-    l = 0.04
+    gausImage = ndi.gaussian_filter(grayFace, 1.5)
+    newGrayEdges = feature.canny(gausImage, sigma=0.01)
 
+    adjusted = getResizedCannyFace(newGrayEdges)
+
+    #resizedImage = resize(grayscale, (375, 500))
+
+    #ks = 5
+    #sig = 1.4
+    #h = 0.07
+    #l = 0.04
     #grayEdges, GxGray, GyGray, smoothed, nms, strong_edges, weak_edges = canny(resizedImage, kernel_size=ks, sigma=sig, high=h, low=l)
-    gausImage = ndi.gaussian_filter(resizedImage, 1.5)
-    grayEdges = feature.canny(gausImage, sigma=0.01)
+    
+    #gausImage = ndi.gaussian_filter(resizedImage, 1.5)
+    #grayEdges = feature.canny(gausImage, sigma=0.01)
 
-    return grayEdges.flatten()
+    return adjusted.flatten()
+
+
+def findAngle(leftEye, rightEye):
+    myradians = math.atan2(rightEye[1]-leftEye[1], rightEye[0]-leftEye[0])
+    mydegrees = math.degrees(myradians)
+    return mydegrees
+
+
+def newRotate(origin, point, angle):
+    """
+    Rotate a point counterclockwise by a given angle around a given origin.
+
+    The angle should be given in radians.
+    """
+    ox, oy = origin
+    px, py = point
+
+    qx = ox + math.cos(angle) * (px - ox) - math.sin(angle) * (py - oy)
+    qy = oy + math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
+    return int(qx), int(qy)
+
+
+def getCoordInfo(fullPath):
+    allData = list()
+    with open(fullPath + ".cat") as f:
+        for line in f:
+            allData = line.split()
+
+    coordDict = dict()
+    leftEye = (int(allData[1]), int(allData[2]))
+    rightEye = (int(allData[3]), int(allData[4]))
+    mouthC = (int(allData[5]), int(allData[6]))
+    earOne = (int(allData[7]), int(allData[8]))
+    earTwo = (int(allData[9]), int(allData[10]))
+    earThree = (int(allData[11]), int(allData[12]))
+    earFour = (int(allData[13]), int(allData[14]))
+    earFive = (int(allData[15]), int(allData[16]))
+
+    coordDict[LEFT_EYE] = leftEye
+    coordDict[RIGHT_EYE] = rightEye
+    coordDict[MOUTH] = mouthC
+    coordDict[EAR_ONE] = earOne
+    coordDict[EAR_TWO] = earTwo
+    coordDict[EAR_THREE] = earThree
+    coordDict[EAR_FOUR] = earFour
+    coordDict[EAR_FIVE] = earFive
+
+    return coordDict
+
+def getMinMax(coordDict):
+    xs = np.absolute(np.array([coordDict[LEFT_EYE][0], 
+                               coordDict[RIGHT_EYE][0], 
+                               coordDict[EAR_ONE][0], 
+                               coordDict[EAR_TWO][0], 
+                               coordDict[EAR_THREE][0], 
+                               coordDict[EAR_FOUR][0], 
+                               coordDict[EAR_FIVE][0]]).astype(np.float))
+    ys = np.absolute(np.array([coordDict[LEFT_EYE][1], 
+                               coordDict[RIGHT_EYE][1], 
+                               coordDict[EAR_ONE][1], 
+                               coordDict[EAR_TWO][1], 
+                               coordDict[EAR_THREE][1], 
+                               coordDict[EAR_FOUR][1], 
+                               coordDict[EAR_FIVE][1]]).astype(np.float))
+
+    topX = int(np.amax(xs))
+    topY = int(np.amax(ys))
+    botX = int(np.amin(xs))
+    botY = int(np.amin(ys))
+
+    return topX, topY, botX, botY
+
+
+def getIsolatedRotatedFace(fullPath, catGray):
+
+    coordDict = getCoordInfo(fullPath)
+    topX, topY, botX, botY = getMinMax(coordDict)
+
+    angleToRotate = findAngle(coordDict[LEFT_EYE], coordDict[RIGHT_EYE])
+    newRotatedImage = rotate(catGray, angleToRotate, center=coordDict[LEFT_EYE])
+
+    newBotRightY, newBotRightX = newRotate((coordDict[LEFT_EYE][1], coordDict[LEFT_EYE][0]), (topY, botX), math.radians(angleToRotate))
+    newBotRightY = max(newBotRightY, 0)
+    newBotRightX = max(newBotRightX, 0)
+    newBotRightY = min(newBotRightY, catGray.shape[0])
+    newBotRightX = min(newBotRightX, catGray.shape[1])
+
+    newTopRightY, newTopRightX = newRotate((coordDict[LEFT_EYE][1], coordDict[LEFT_EYE][0]), (botY, topX), math.radians(angleToRotate))
+    newTopRightY = max(newTopRightY, 0)
+    newTopRightX = max(newTopRightX, 0)
+    newTopRightY = min(newTopRightY, catGray.shape[0])
+    newTopRightX = min(newTopRightX, catGray.shape[1])
+
+    newTopY = max(coordDict[LEFT_EYE][1], newTopRightY, newBotRightY)
+    newTopX = max(coordDict[LEFT_EYE][0], newTopRightX, newBotRightX)
+    newBotY = min(coordDict[LEFT_EYE][1], newTopRightY, newBotRightY)
+    newBotX = min(coordDict[LEFT_EYE][0], newTopRightX, newBotRightX)
+
+    grayFace = newRotatedImage[newBotY: newTopY, newBotX: newTopX]
+
+    return grayFace
+
+
+def getResizedCannyFace(newGrayEdges):
+
+    oRows, oCols = newGrayEdges.shape
+
+    rowsToPad = 0
+    colsToPad = 0
+    paddedImage = np.copy(newGrayEdges)
+
+    if(oRows > oCols):
+        colsToPad = oRows - oCols
+        if(colsToPad % 2 != 0):
+            pad_width = ((1,0),(0,0))
+            paddedImage = np.pad(paddedImage, pad_width, mode='edge')
+            colsToPad += 1
+        
+        pad_width = ((0,0),(colsToPad//2,colsToPad//2))
+        paddedImage = np.pad(paddedImage, pad_width, mode='edge')
+
+
+    elif(oCols > oRows):
+        rowsToPad = oCols - oRows
+        if(rowsToPad % 2 != 0):
+            pad_width = ((0,0),(1,0))
+            paddedImage = np.pad(paddedImage, pad_width, mode='edge')
+            rowsToPad += 1
+
+        pad_width = ((rowsToPad//2,rowsToPad//2),(0,0))
+        paddedImage = np.pad(paddedImage, pad_width, mode='edge')
+
+
+    else:
+        rowsToPad = 0
+
+
+
+
+    resizedImage = resize(paddedImage, (TARGET_ROWS, TARGET_COLS), anti_aliasing=False)
+
+    # Attempts to get rid of some blurring from resizing.
+    adjusted = (resizedImage > 0.1)
+
+    return resizedImage
+
+
 
 
 def conv(image, kernel):
@@ -413,7 +578,7 @@ def getTrainableDataset(max_examples=-1):
     y_builder = np.asarray(y_labs, dtype=int)
     for file in x_files:
         imageMat = io.imread(file)
-        features = imageToFeatures(imageMat)
+        features = imageToFeatures(imageMat, file)
         if num_features == None:
             num_features = features.shape[0]
             X_builder = np.zeros((1, num_features))
