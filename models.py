@@ -26,12 +26,12 @@ def trainNeuralNet(X_train, y_train):
 
 
     nn = Sequential()
-    nn.add(Dense(120, activation='relu'))
-    nn.add(Dense(120, activation='relu'))
+    nn.add(Dense(5, activation='relu'))
+    # nn.add(Dense(120, activation='relu'))
     nn.add(Dense(1, activation='sigmoid'))
     nn.compile(optimizer='Adam', loss='binary_crossentropy', metrics=['acc'])#,f1_m,precision_m, recall_m])
     #nn.compile(optimizer='Adam', loss='binary_crossentropy', metrics=['acc',f1_m])#,precision_m, recall_m])
-    hnn = nn.fit(X_train, y_train, epochs=10)
+    hnn = nn.fit(X_train, y_train, epochs=30)
 
     print("Neural net raining set accuracy: %f" % np.sqrt(hnn.history['acc'][-1]))
     return nn
@@ -50,10 +50,10 @@ def evaluateLogReg(model, X_test, y_test, save_path):
 
     precision = tp / (tp + fp + K.epsilon())
     recall = tp / (tp + fn + K.epsilon())
-    plot_confusion_matrix(y_test, y_pred, classes=["Non-striped", "Striped"], save_path=save_path)
 
     print("\n\n")
     print("***LOG REG RESULTS***")
+    plot_confusion_matrix(y_test, y_pred, classes=["Non-striped", "Striped"], save_path=save_path)
     print("Test set accuracy:     %f" % model.score(X_test, y_test))
     print("Test set true positives:     %i" % tp)
     print("Test set false positives:     %i" % fp)
@@ -75,10 +75,10 @@ def evaluateNN(model, X_test, y_test, save_path):
 
     precision = tp / (tp + fp + K.epsilon())
     recall = tp / (tp + fn + K.epsilon())
-    plot_confusion_matrix(y_test, y_pred, classes=["Non-striped", "Striped"], save_path=save_path)
 
     print("\n\n")
     print("***Neural Net RESULTS***")
+    plot_confusion_matrix(y_test, y_pred, classes=["Non-striped", "Striped"], save_path=save_path)
     print("Test set accuracy:     %f" % np.sqrt(accuracy))
     print("Test set true positives:     %i" % tp)
     print("Test set false positives:     %i" % fp)
